@@ -3,6 +3,8 @@ name: Asg Julia Runtime Bootstrap
 on:
   push:
     branches: [julia-runtime-bootstrap-20260819]
+  pull_request:
+    branches: [master]
 
 jobs:
   bundle-julia:
