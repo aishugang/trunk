@@ -1,0 +1,75 @@
+name: Asg Julia Public Dependency Depot
+
+on:
+  push:
+    branches: [julia-runtime-bootstrap-20260819]
+  pull_request:
+    branches: [master]
+
+jobs:
+  bundle-depot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.10.5'
+          arch: x64
+      - name: Install exact public dependencies
+        shell: bash
+        run: |
+          mkdir -p /tmp/asg-depot-env
+          cat > /tmp/asg-depot-env/install.jl <<'JULIA'
+          using Pkg
+          Pkg.activate("/tmp/asg-depot-env")
+          specs = PackageSpec[
+              PackageSpec(name="ArnoldiMethod", version="0.4.0"),
+              PackageSpec(name="CodecZlib", version="0.7.8"),
+              PackageSpec(name="CommonMark", version="1.0.3"),
+              PackageSpec(name="CommonSubexpressions", version="0.3.1"),
+              PackageSpec(name="ConstructionBase", version="1.6.0"),
+              PackageSpec(name="DataAPI", version="1.16.0"),
+              PackageSpec(name="DataStructures", version="0.19.6"),
+              PackageSpec(name="DataValueInterfaces", version="1.0.0"),
+              PackageSpec(name="DiffResults", version="1.1.0"),
+              PackageSpec(name="DiffRules", version="1.16.0"),
+              PackageSpec(name="DocStringExtensions", version="0.9.5"),
+              PackageSpec(name="FillArrays", version="1.17.0"),
+              PackageSpec(name="ForwardDiff", version="1.4.5"),
+              PackageSpec(name="Glob", version="1.5.0"),
+              PackageSpec(name="Inflate", version="0.1.5"),
+              PackageSpec(name="IrrationalConstants", version="0.2.6"),
+              PackageSpec(name="IteratorInterfaceExtensions", version="1.0.0"),
+              PackageSpec(name="JLLWrappers", version="1.8.0"),
+              PackageSpec(name="JuliaSyntax", version="1.0.2"),
+              PackageSpec(name="LightXML", version="0.9.3"),
+              PackageSpec(name="LogExpFunctions", version="1.0.1"),
+              PackageSpec(name="NaNMath", version="1.1.4"),
+              PackageSpec(name="OrderedCollections", version="2.0.1"),
+              PackageSpec(name="PrecompileTools", version="1.2.1"),
+              PackageSpec(name="Requires", version="1.3.1"),
+              PackageSpec(name="SimpleTraits", version="0.9.6"),
+              PackageSpec(name="SpecialFunctions", version="2.8.3"),
+              PackageSpec(name="StaticArraysCore", version="1.4.4"),
+              PackageSpec(name="TableTraits", version="1.0.1"),
+              PackageSpec(name="Tables", version="1.13.0"),
+              PackageSpec(name="TensorCore", version="0.1.1"),
+              PackageSpec(name="TranscodingStreams", version="0.11.3"),
+              PackageSpec(name="UnsafeAtomics", version="0.3.1"),
+              PackageSpec(name="VTKBase", version="1.0.1")
+          ]
+          Pkg.add(specs)
+          Pkg.precompile()
+          JULIA
+          julia /tmp/asg-depot-env/install.jl
+      - name: Bundle public depot
+        run: |
+          cd "$HOME"
+          tar -czf julia-1.10.5-public-depot.tar.gz .julia/packages .julia/artifacts .julia/registries .julia/scratchspaces 2>/dev/null || tar -czf julia-1.10.5-public-depot.tar.gz .julia/packages .julia/artifacts .julia/registries
+          ls -lh julia-1.10.5-public-depot.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: julia-1.10.5-public-depot
+          path: ~/julia-1.10.5-public-depot.tar.gz
+          compression-level: 0
+          retention-days: 1
